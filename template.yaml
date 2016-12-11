@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+#Transform: AWS::Serverless-2016-10-31
+Resources:
+
+  # create the S3 bucket used to store time-series data
+  DataRepositoryS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: "PublicRead"
+
+  # create IAM policy that permits Kinesis Firehose to write to the S3 bucket
+  FirehoseToS3Policy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument: {
+          "Version": "2012-10-17",
+          "Statement": [
+              {
+                  "Sid": "Stmt1481443387000",
+                  "Effect": "Allow",
+                  "Action": [
+                      "s3:PutObject",
+                      "s3:PutObjectAcl",
+                      "s3:PutObjectVersionAcl"
+                  ],
+                  "Resource": [
+                      "*"
+                  ]
+              }
+          ]
+      }
+      PolicyName: "Test"
+      Roles:
+        - Ref: FirehoseToS3Role
+
+  # create IAM role that connects to the IAM policy
+  FirehoseToS3Role:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "firehose.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  # create the Kinesis Firehose that takes device data and persists to S3
+  DataKinesisFirehose:
+    Type: "AWS::KinesisFirehose::DeliveryStream"
+    DependsOn: DataRepositoryS3Bucket
+    Properties:
+      S3DestinationConfiguration:
+        BucketARN: !Join [ '', [ 'arn:aws:s3:::', Ref: DataRepositoryS3Bucket ] ]
+        BufferingHints:
+          IntervalInSeconds: 60 # amount of seconds to wait before persisting
+          SizeInMBs: 1 # setting small for a basic test
+        CompressionFormat: "GZIP"
+        Prefix: "device-data"
+        RoleARN: String
+
+Outputs:
+
+  DataRepositoryBucketName:
+    Description: "Name of the S3 bucket storing device data"
+    Value: !Ref DataRepositoryS3Bucket
