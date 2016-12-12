@@ -99,9 +99,8 @@ Resources:
            -
              Effect: "Allow"
              Action:
-               - "kinesis:DescribeStream"
-               - "kinesis:GetShardIterator"
-               - "kinesis:GetRecords"
+               - "firehose:DescribeDeliveryStream"
+               - "firehose:Get*"
              Resource: !Join [ "", [ "arn:aws:firehose:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":deliverystream/", !Ref DataKinesisFirehose ] ]
       PolicyName: "AnalyticsToFirehose"
       Roles:
