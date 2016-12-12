@@ -28,23 +28,16 @@ Resources:
   FirehoseToS3Policy:
     Type: "AWS::IAM::Policy"
     Properties:
-      PolicyDocument: {
-          "Version": "2012-10-17",
-          "Statement": [
-              {
-                  "Sid": "Stmt1481443387000",
-                  "Effect": "Allow",
-                  "Action": [
-                      "s3:PutObject",
-                      "s3:PutObjectAcl",
-                      "s3:PutObjectVersionAcl"
-                  ],
-                  "Resource": [
-                      "*"
-                  ]
-              }
-          ]
-      }
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+           -
+             Effect: "Allow"
+             Action:
+               - "s3:PutObject"
+               - "s3:PutObjectAcl"
+               - "s3:PutObjectVersionAcl"
+             Resource: !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket ] ]
       PolicyName: "Test"
       Roles:
         - Ref: FirehoseToS3Role
