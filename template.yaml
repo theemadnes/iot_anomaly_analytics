@@ -90,18 +90,25 @@ Resources:
       Path: "/"
 
   # create IAM policy that permits Kinesis Analytics to read from the Firehose delivery stream
-  KinesisAnalyticsToFirehosePolicy:
+  KinesisAnalyticsToKinesisStreamAndFirehosePolicy:
     Type: "AWS::IAM::Policy"
     Properties:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
            -
-             Effect: "Allow"
-             Action:
-               - "firehose:DescribeDeliveryStream"
-               - "firehose:Get*"
-             Resource: !Join [ "", [ "arn:aws:firehose:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":deliverystream/", !Ref DataKinesisFirehose ] ]
+              Effect: "Allow"
+              Action:
+                - "firehose:DescribeDeliveryStream"
+                - "firehose:Get*"
+              Resource: !Join [ "", [ "arn:aws:firehose:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":deliverystream/", !Ref DataKinesisFirehose ] ]
+           -
+              Effect: "Allow"
+              Action:
+                - "kinesis:DescribeStream"
+                - "kinesis:PutRecord"
+                - "kinesis:PutRecords"
+              Resource: !GetAtt KinesisAnomalyStream.Arn
       PolicyName: "AnalyticsToFirehose"
       Roles:
         - Ref: KinesisAnalyticsRole
@@ -116,7 +123,7 @@ Resources:
         BufferingHints:
           IntervalInSeconds: 60 # amount of seconds to wait before persisting
           SizeInMBs: 1 # setting small for a basic test
-        CompressionFormat: "UNCOMPRESSED"
+        CompressionFormat: "UNCOMPRESSED" # in real life, we would both compress & encrypt this data
         RoleARN: !GetAtt FirehoseToS3Role.Arn
         Prefix: "deviceData/"
         CloudWatchLoggingOptions:
@@ -125,6 +132,10 @@ Resources:
           LogStreamName: !Ref FirehoseLogStream
 
     # create Kinesis stream that Kinesis Analytics will write to when anomalies are found
+  KinesisAnomalyStream:
+    Type: "AWS::Kinesis::Stream"
+    Properties:
+      ShardCount: ShardCount
 
 
     # create a CWL log group & log stream for Kinesis Firehose logging
