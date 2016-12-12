@@ -28,7 +28,7 @@ Resources:
   FirehoseToS3Policy:
     Type: "AWS::IAM::Policy"
     Properties:
-      PolicyDocument: 
+      PolicyDocument:
         Version: "2012-10-17"
         Statement:
            -
@@ -37,8 +37,23 @@ Resources:
                - "s3:PutObject"
                - "s3:PutObjectAcl"
                - "s3:PutObjectVersionAcl"
-             Resource: !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket ] ]
-      PolicyName: "Test"
+               - "s3:AbortMultipartUpload"
+               - "s3:GetBucketLocation"
+               - "s3:GetObject"
+               - "s3:ListBucket"
+               - "s3:ListBucketMultipartUploads"
+             Resource:
+               - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket ] ]
+               - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket, "/*" ] ]
+           -
+             Effect: "Allow"
+             Action:
+               - "logs:CreateLogGroup"
+               - "logs:CreateLogStream"
+               - "logs:PutLogEvents"
+               - "logs:DescribeLogStreams"
+             Resource: "arn:aws:logs:*:*:*"
+      PolicyName: "FirehoseToS3"
       Roles:
         - Ref: FirehoseToS3Role
 
@@ -58,6 +73,40 @@ Resources:
               - "sts:AssumeRole"
       Path: "/"
 
+  # create IAM role that grants Kinesis Analytics access to the Firehose delivery stream
+  KinesisAnalyticsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "kinesisanalytics.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  # create IAM policy that permits Kinesis Analytics to read from the Firehose delivery stream
+  KinesisAnalyticsToFirehosePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+           -
+             Effect: "Allow"
+             Action:
+               - "kinesis:DescribeStream"
+               - "kinesis:GetShardIterator"
+               - "kinesis:GetRecords"
+             Resource: !Join [ "", [ "arn:aws:firehose:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":deliverystream/", !Ref DataKinesisFirehose ] ]
+      PolicyName: "AnalyticsToFirehose"
+      Roles:
+        - Ref: KinesisAnalyticsRole
+
   # create the Kinesis Firehose that takes device data and persists to S3
   DataKinesisFirehose:
     Type: "AWS::KinesisFirehose::DeliveryStream"
@@ -68,9 +117,24 @@ Resources:
         BufferingHints:
           IntervalInSeconds: 60 # amount of seconds to wait before persisting
           SizeInMBs: 1 # setting small for a basic test
-        CompressionFormat: "GZIP"
-        Prefix: "device-data" # does default of date work?
+        CompressionFormat: "UNCOMPRESSED"
         RoleARN: !GetAtt FirehoseToS3Role.Arn
+        Prefix: "deviceData/"
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: !Ref FirehoseLoggingLogGroup
+          LogStreamName: !Ref FirehoseLogStream
+
+    # create a CWL log group & log stream for Kinesis Firehose logging
+  FirehoseLoggingLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      RetentionInDays: 3
+
+  FirehoseLogStream:
+    Type: "AWS::Logs::LogStream"
+    Properties:
+      LogGroupName: !Ref FirehoseLoggingLogGroup
 
 Outputs:
 
