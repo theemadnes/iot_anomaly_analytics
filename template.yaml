@@ -1,5 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 #Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+
+  EmailAddress:
+    Description: "Your email address, used to notify via SNS when anomalies are detected"
+    Type: "String"
+
 Resources:
 
   # create the S3 bucket used to store time-series data
@@ -7,6 +14,15 @@ Resources:
     Type: "AWS::S3::Bucket"
     Properties:
       AccessControl: "PublicRead"
+
+  # SNS topic used to alert user when anomalies are detected in Kinesis
+  AlertSnsTopic:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      Subscription:
+        -
+          Endpoint: !Ref EmailAddress
+          Protocol: "email"
 
   # create IAM policy that permits Kinesis Firehose to write to the S3 bucket
   FirehoseToS3Policy:
@@ -55,16 +71,24 @@ Resources:
     DependsOn: DataRepositoryS3Bucket
     Properties:
       S3DestinationConfiguration:
-        BucketARN: !Join [ '', [ 'arn:aws:s3:::', Ref: DataRepositoryS3Bucket ] ]
+        BucketARN: !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket ] ]
         BufferingHints:
           IntervalInSeconds: 60 # amount of seconds to wait before persisting
           SizeInMBs: 1 # setting small for a basic test
         CompressionFormat: "GZIP"
-        Prefix: "device-data"
-        RoleARN: String
+        Prefix: "device-data" # does default of date work?
+        RoleARN: !GetAtt FirehoseToS3Role.Arn
 
 Outputs:
 
   DataRepositoryBucketName:
     Description: "Name of the S3 bucket storing device data"
     Value: !Ref DataRepositoryS3Bucket
+
+  DataKinesisFirehoseId:
+    Description: "ID of the Kinesis Firehose delivery stream, to be used in the data producer script"
+    Value: !Ref DataKinesisFirehose
+
+  SnsAlertTopic:
+    Description: "Name of SNS topic used to notify (via email) user of anomlies"
+    Value: !GetAtt AlertSnsTopic.TopicName
