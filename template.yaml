@@ -124,6 +124,9 @@ Resources:
           LogGroupName: !Ref FirehoseLoggingLogGroup
           LogStreamName: !Ref FirehoseLogStream
 
+    # create Kinesis stream that Kinesis Analytics will write to when anomalies are found
+
+
     # create a CWL log group & log stream for Kinesis Firehose logging
   FirehoseLoggingLogGroup:
     Type: "AWS::Logs::LogGroup"

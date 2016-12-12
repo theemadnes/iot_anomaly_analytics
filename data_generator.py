@@ -21,6 +21,7 @@ while True:
             'sensorReading' : random.randint(-5,5),
             'readingTimestamp' : datetime.datetime.utcnow().isoformat()
         }
+        print("Sending payload to Kinesis: " + json.dumps(payload))
         print(client.put_record(
             DeliveryStreamName=delivery_stream_id,
             Record={
