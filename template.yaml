@@ -135,7 +135,7 @@ Resources:
   KinesisAnomalyStream:
     Type: "AWS::Kinesis::Stream"
     Properties:
-      ShardCount: ShardCount
+      ShardCount: 1
 
 
     # create a CWL log group & log stream for Kinesis Firehose logging
