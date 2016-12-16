@@ -1,4 +1,4 @@
---Creates a temporary stream.
+ --Creates a temporary stream.
 CREATE OR REPLACE STREAM "TEMP_STREAM" (
 	        "sensorReading"        SMALLINT,
 	        "deviceId"         varchar(4),
@@ -22,4 +22,7 @@ CREATE OR REPLACE PUMP "STREAM_PUMP" AS
 CREATE OR REPLACE PUMP "OUTPUT_PUMP" AS
    INSERT INTO "DESTINATION_SQL_STREAM"
       SELECT STREAM * FROM "TEMP_STREAM"
+			-- To keep things simple, define an important anomaly as an item with 
+			-- an ANOMALY_SCORE greater than 5
+      WHERE ANOMALY_SCORE > 5
       ORDER BY FLOOR("TEMP_STREAM".ROWTIME TO SECOND), ANOMALY_SCORE DESC;
