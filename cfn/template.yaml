@@ -113,6 +113,75 @@ Resources:
       Roles:
         - Ref: KinesisAnalyticsRole
 
+  # create IAM role that grants AWS Lambda access to publish to the SNS Topic
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  # create IAM policy that permits Kinesis Analytics to read from the Firehose delivery stream
+  LambdaToKinesisAndSnsPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+           -
+              Effect: "Allow"
+              Action:
+                - "sns:GetTopicAttributes"
+                - "sns:ListTopics"
+                - "sns:Publish"
+              Resource: !Ref AlertSnsTopic
+           -
+              Effect: "Allow"
+              Action:
+                - "kinesis:DescribeStream"
+                - "kinesis:GetRecords"
+                - "kinesis:GetShardIterator"
+              Resource: !GetAtt KinesisAnomalyStream.Arn
+           -
+              Effect: "Allow"
+              Action:
+                - "logs:CreateLogGroup"
+              Resource: !Join [ "", [ "arn:aws:logs:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":*" ] ]
+           -
+              Effect: "Allow"
+              Action:
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+              Resource: !Join [ "", [ "arn:aws:logs:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":log-group:/aws/lambda/*" ] ]
+      PolicyName: "LambdaToKinesisAndSnsPolicy"
+      Roles:
+        - Ref: LambdaExecutionRole
+
+  # create Lambda function that takes anomalies from Kinesis Analytics and publishes on SNS
+  AlertingLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: "alex-mattson-demo-code"
+        S3Key: "anomaly/lambda_function.zip"
+      Description: "Lambda function that takes anomalies discovered in Kinesis Analytics and performs alerting to SNS topic"
+      Environment:
+        Variables:
+          "SnsTopicArn": !Ref AlertSnsTopic
+      Handler: "lambda_function.lambda_handler"
+      Runtime: "python2.7"
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 3
+
   # create the Kinesis Firehose that takes device data and persists to S3
   DataKinesisFirehose:
     Type: "AWS::KinesisFirehose::DeliveryStream"
@@ -131,14 +200,14 @@ Resources:
           LogGroupName: !Ref FirehoseLoggingLogGroup
           LogStreamName: !Ref FirehoseLogStream
 
-    # create Kinesis stream that Kinesis Analytics will write to when anomalies are found
+  # create Kinesis stream that Kinesis Analytics will write to when anomalies are found
   KinesisAnomalyStream:
     Type: "AWS::Kinesis::Stream"
     Properties:
       ShardCount: 1
 
 
-    # create a CWL log group & log stream for Kinesis Firehose logging
+  # create a CWL log group & log stream for Kinesis Firehose logging
   FirehoseLoggingLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
@@ -160,5 +229,5 @@ Outputs:
     Value: !Ref DataKinesisFirehose
 
   SnsAlertTopic:
-    Description: "Name of SNS topic used to notify (via email) user of anomlies"
-    Value: !GetAtt AlertSnsTopic.TopicName
+    Description: "ARN of SNS topic used to notify (via email) user of anomlies"
+    Value: !Ref AlertSnsTopic
