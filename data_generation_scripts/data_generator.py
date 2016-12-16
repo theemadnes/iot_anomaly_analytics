@@ -11,9 +11,9 @@ client = boto3.client('firehose')
 while True:
 
     # simulate each device sending its telemetry data
-    for device in settings.devices:
+    for device_id in settings.device_ids:
         payload = {
-            'deviceId' : device,
+            'deviceId' : device_id,
             'sensorReading' : random.randint(-5,5),
             'readingTimestamp' : datetime.datetime.utcnow().isoformat()
         }

@@ -8,8 +8,8 @@ import settings
 client = boto3.client('firehose')
 
 payload = {
-    'deviceId' : random.choice(settings.devices), # select a random device
-    'sensorReading' : random.choice([random.randint(100,200),random.randint(-200,-100)]),
+    'deviceId' : random.choice(settings.device_ids), # select a random device
+    'sensorReading' : random.choice([random.randint(400,500),random.randint(-500,-400)]),
     'readingTimestamp' : datetime.datetime.utcnow().isoformat()
 }
 
