@@ -14,6 +14,21 @@ Resources:
     Type: "AWS::S3::Bucket"
     Properties:
       AccessControl: "PublicRead"
+  DataRepositoryS3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref DataRepositoryS3Bucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:Get*"
+              - "s3:List*"
+            Effect: "Allow"
+            Principal: "*"
+            Resource:
+              - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket ] ]
+              - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket, "/*" ] ] 
 
   # SNS topic used to alert user when anomalies are detected in Kinesis
   AlertSnsTopic:
