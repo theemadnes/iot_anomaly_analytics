@@ -123,7 +123,7 @@ Resources:
         BufferingHints:
           IntervalInSeconds: 60 # amount of seconds to wait before persisting
           SizeInMBs: 1 # setting small for a basic test
-        CompressionFormat: "UNCOMPRESSED" # in real life, we would both compress & encrypt this data
+        CompressionFormat: "GZIP" # in real life, we would encrypt this data
         RoleARN: !GetAtt FirehoseToS3Role.Arn
         Prefix: "deviceData/"
         CloudWatchLoggingOptions:

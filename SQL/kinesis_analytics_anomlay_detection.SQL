@@ -1,4 +1,4 @@
- --Creates a temporary stream.
+--Creates a temporary stream.
 CREATE OR REPLACE STREAM "TEMP_STREAM" (
 	        "sensorReading"        SMALLINT,
 	        "deviceId"         varchar(4),
@@ -18,7 +18,7 @@ CREATE OR REPLACE PUMP "STREAM_PUMP" AS
       FROM TABLE(RANDOM_CUT_FOREST(
             -- See http://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/random-cut-forest.html
             -- for an explaination of the function parameters below.
-            -- Non-default number is 120 - that is our timeDecay.
+            -- The important number is 120 - that is our timeDecay.
               CURSOR(SELECT STREAM * FROM "SOURCE_SQL_STREAM_001"), 100, 256, 120, 1));
 
 -- Sort records by descending anomaly score, insert into output stream
