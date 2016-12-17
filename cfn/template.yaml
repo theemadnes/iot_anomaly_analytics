@@ -28,7 +28,7 @@ Resources:
             Principal: "*"
             Resource:
               - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket ] ]
-              - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket, "/*" ] ] 
+              - !Join [ "", [ "arn:aws:s3:::", !Ref DataRepositoryS3Bucket, "/*" ] ]
 
   # SNS topic used to alert user when anomalies are detected in Kinesis
   AlertSnsTopic:
@@ -209,7 +209,7 @@ Resources:
           SizeInMBs: 1 # setting small for a basic test
         CompressionFormat: "GZIP" # in real life, we would encrypt this data
         RoleARN: !GetAtt FirehoseToS3Role.Arn
-        Prefix: "deviceData/"
+        Prefix: ""
         CloudWatchLoggingOptions:
           Enabled: true
           LogGroupName: !Ref FirehoseLoggingLogGroup
