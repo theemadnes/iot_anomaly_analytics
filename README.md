@@ -16,6 +16,7 @@ Process data ingestion to perform both anomaly detection via Kinesis Analytics a
   - Set the Kinesis stream as the destination
 - In the Lambda console, set the trigger for your lambda function to the Kinesis anomaly stream, with a batch size of 1.
 - Run the generate_single_anomaly python script **once** - confirm you received an email alerting you to an anomaly. You can run this as many times as you like, but make sure to give about a minute or so between executions to make sure that the anomalies don't become the norm. You can play around with the sensitivity / time decay in the Kinesis Analytics SQL console.
+
 #### Analytics using Athena
 - All this time, data has been accumulating in your S3 bucket. Time to run some interactive queries against it.
 - In the Athena console, go to the Catalog Manager tab.
@@ -28,4 +29,4 @@ Process data ingestion to perform both anomaly detection via Kinesis Analytics a
   - sensorReading - smallint
   - readingTimestamp - timestamp
 - Skip partitioning and create table.
-- Query your data! Some examples are in athena-examples.sql 
+- Query your data! Some examples are in athena-examples.sql
