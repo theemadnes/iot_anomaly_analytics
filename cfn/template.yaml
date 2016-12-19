@@ -243,6 +243,10 @@ Outputs:
     Description: "ID of the Kinesis Firehose delivery stream, to be used in the data producer script"
     Value: !Ref DataKinesisFirehose
 
+  KinesisAnomalyStreamId:
+    Description: "ID of the Kinesis stream, to be used as the target for Kinesis Analytics anomaly detection and event source for the Lambda alerting function"
+    Value: !Ref KinesisAnomalyStream
+
   SnsAlertTopic:
     Description: "ARN of SNS topic used to notify (via email) user of anomlies"
     Value: !Ref AlertSnsTopic
