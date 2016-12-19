@@ -1,5 +1,19 @@
 # iot_anomaly_analytics
-Process data ingestion to perform both anomaly detection via Kinesis Analytics and store data for analytics with Athena
+Simulates a serverless IoT data processing pipeline using the following AWS services:
+- Kinesis (Firehose, Streams & Analytics)
+- CloudFormation
+- Athena
+- Lambda
+- SNS
+- S3
+- IAM
+
+Notably absent from this list is AWS IoT - given that the focus is on data processing, this demo architecture "short circuits" the data flow and goes right from the data producer script directly to a Kinesis Firehose delivery stream. IRL, you would have AWS IoT as your message broker / security guard / life coach :)
+
+The data generator scripts assume a few things:
+- You have Python 2.7 installed
+- You have boto3 installed
+- You have your AWS credentials configured locally and those credentials can put records to your Kinesis Firehose delivery stream 
 
 ### Instructions (**very** raw at this point)
 
